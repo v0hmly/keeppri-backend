@@ -1,0 +1,30 @@
+package services
+
+import (
+	"github.com/v0hmly/keeppri-backend/internal/lib/hash"
+	"github.com/v0hmly/keeppri-backend/internal/repository"
+	"github.com/v0hmly/keeppri-backend/internal/repository/domain"
+)
+
+type (
+	AuthService interface {
+		Register(user *domain.User) (*string, error)
+		Login(email, password string) (*string, error)
+		Logout(sessionID string) error
+	}
+
+	Services struct {
+		AuthService AuthService
+	}
+
+	Deps struct {
+		Repos *repository.Repository
+		Hash  hash.PasswordHasher
+	}
+)
+
+func NewServices(deps Deps) *Services {
+	return &Services{
+		AuthService: NewAuthServices(deps.Repos, deps.Hash),
+	}
+}

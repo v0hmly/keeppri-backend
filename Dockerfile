@@ -35,7 +35,7 @@ WORKDIR /auth
 
 # Copy only the necessary files from the builder stage
 COPY --from=builder /auth/auth .
-COPY /config/local.yaml ./config/local.yaml
+COPY /config/. ./config/.
 
 # Expose the port that the application listens on
 EXPOSE 50051

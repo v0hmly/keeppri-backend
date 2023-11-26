@@ -10,7 +10,7 @@ postgres:
   port: 5432
   user: postgres
   password: postgres
-  dbname: auth_db
+  db: auth_db
 
 redis:
   host: localhost

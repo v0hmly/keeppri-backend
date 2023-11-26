@@ -18,7 +18,7 @@ type (
 	}
 
 	GRPCConfig struct {
-		Port    int    `yaml:"port" env-default:"50051"`
+		Port    string `yaml:"port" env-default:"50051"`
 		Timeout string `yaml:"timeout"`
 	}
 
@@ -27,7 +27,7 @@ type (
 		Port     int    `yaml:"port"`
 		User     string `yaml:"user"`
 		Password string `yaml:"password"`
-		Dbname   string `yaml:"dbname"`
+		Db       string `yaml:"db"`
 	}
 
 	RedisConfig struct {
