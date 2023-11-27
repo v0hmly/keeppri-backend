@@ -43,8 +43,9 @@ func run() error {
 	}
 
 	newServices := services.NewServices(services.Deps{
-		Repos: repo,
-		Hash:  hash.NewBcryptPasswordHasher(),
+		Logger: logger,
+		Repos:  repo,
+		Hash:   hash.NewBcryptPasswordHasher(),
 	})
 
 	grpcHandler := grpc.NewGrpcHandler(newServices)

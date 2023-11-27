@@ -13,7 +13,10 @@ func (d *DBConn) UserExists(email string) (bool, error) {
 	user := &domain.User{}
 	req := d.db.Where("email = ?", email).First(&user)
 	if req.RowsAffected == 0 {
-		return false, fmt.Errorf("%s: %w", op, ErrUserNotFound)
+		return false, nil
+	}
+	if req.Error != nil {
+		return false, fmt.Errorf("%s: %w", op, req.Error)
 	}
 	return true, nil
 }
@@ -44,9 +47,3 @@ func (d *DBConn) Login(email, password string) (*domain.User, error) {
 
 	return user, nil
 }
-
-var (
-	ErrUserExists   = errors.New("user already exists")
-	ErrUserNotFound = errors.New("user not found")
-	ErrAppNotFound  = errors.New("app not found")
-)
