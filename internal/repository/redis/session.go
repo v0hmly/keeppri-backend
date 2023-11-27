@@ -12,12 +12,7 @@ import (
 func (r *Redis) SetSession(session *domain.Session) error {
 	op := "repository.redis.session.SetSession"
 
-	data, err := json.Marshal(session)
-	if err != nil {
-		return fmt.Errorf("%s: unmarshal error: %w", op, err)
-	}
-
-	if err := r.client.Set(context.Background(), session.SessionID, data, session.ExpireAt).Err(); err != nil {
+	if err := r.client.Set(context.Background(), session.SessionToken, session.UserID, session.ExpireAt).Err(); err != nil {
 		return fmt.Errorf("%s: set error: %w", op, err)
 	}
 
@@ -47,10 +42,10 @@ func (r *Redis) GetSession(sessionID string) (*domain.Session, error) {
 	return session, nil
 }
 
-func (r *Redis) DelSession(sessionID string) error {
+func (r *Redis) DelSession(sessionToken string) error {
 	op := "repository.redis.session.DelSession"
 
-	if err := r.client.Del(context.Background(), sessionID).Err(); err != nil {
+	if err := r.client.Del(context.Background(), sessionToken).Err(); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil

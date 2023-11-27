@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/v0hmly/keeppri-backend/internal/grpc/pb"
-	"github.com/v0hmly/keeppri-backend/internal/lib/grpc_errors"
 	"github.com/v0hmly/keeppri-backend/internal/repository/domain"
 	"github.com/v0hmly/keeppri-backend/internal/repository/postgres"
 	"github.com/v0hmly/keeppri-backend/internal/services"
@@ -70,20 +69,18 @@ func (h *Handler) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Re
 func (h *Handler) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutResponse, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, "metadata.FromIncomingContext: %v", grpc_errors.ErrNoCtxMetaData)
+		return nil, status.Errorf(codes.Unauthenticated, "no ctx metadata")
 	}
 
-	sessionID := md.Get("session_id")[0]
+	sessionID := md.Get("session_token")[0]
 	if sessionID == "" {
-		return nil, status.Errorf(codes.PermissionDenied, "md.Get sessionId: %v", grpc_errors.ErrInvalidSessionId)
+		return nil, status.Errorf(codes.PermissionDenied, "invalid session id")
 	}
 
 	err := h.services.AuthService.Logout(sessionID)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to logout user")
 	}
 
-	logoutResponse := &pb.LogoutResponse{}
-
-	return logoutResponse, nil
+	return &pb.LogoutResponse{}, nil
 }

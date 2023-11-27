@@ -12,7 +12,7 @@ type (
 	AuthService interface {
 		Register(user *domain.User) (*string, error)
 		Login(email, password string) (*string, error)
-		Logout(sessionID string) error
+		Logout(sessionToken string) error
 	}
 
 	Services struct {

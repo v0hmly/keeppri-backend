@@ -82,19 +82,34 @@ func (s *AuthServices) Login(email, password string) (*string, error) {
 	}
 
 	session := domain.Session{
-		SessionID: uuid.New().String(),
-		ExpireAt:  30 * 24 * time.Hour,
-		UserID:    user.ID,
+		SessionToken: uuid.New().String(),
+		ExpireAt:     30 * 24 * time.Hour,
+		UserID:       user.ID,
 	}
 	if err := s.repos.Redis.SetSession(&session); err != nil {
 		logger.Error("failed to login user", log.Err(err))
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return &session.SessionID, nil
+	return &session.SessionToken, nil
 }
 
-func (s *AuthServices) Logout(sessionID string) error {
+func (s *AuthServices) Logout(sessionToken string) error {
+	op := "services.AuthServices.Logout"
+
+	logger := s.logger.With(
+		slog.String("op", op),
+		slog.String("session_token", sessionToken),
+	)
+
+	logger.Debug("logout user")
+
+	err := s.repos.Redis.DelSession(sessionToken)
+	if err != nil {
+		logger.Error("failed to logout user", log.Err(err))
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
 	return nil
 }
 
