@@ -6,20 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/v0hmly/keeppri-backend/internal/repository/domain"
+	"gorm.io/gorm"
 )
-
-func (d *DBConn) UserExists(email string) (bool, error) {
-	op := "repository.postgres.UserExists"
-	user := &domain.User{}
-	req := d.db.Where("email = ?", email).First(&user)
-	if req.RowsAffected == 0 {
-		return false, nil
-	}
-	if req.Error != nil {
-		return false, fmt.Errorf("%s: %w", op, req.Error)
-	}
-	return true, nil
-}
 
 func (d *DBConn) Register(user *domain.User) (*string, error) {
 	op := "repository.postgres.Register"
@@ -28,7 +16,10 @@ func (d *DBConn) Register(user *domain.User) (*string, error) {
 	user.ID = userID
 
 	req := d.db.Create(user)
-	if req.RowsAffected == 0 {
+	if req.Error != nil {
+		if errors.Is(req.Error, gorm.ErrDuplicatedKey) {
+			return nil, ErrUserExists
+		}
 		return nil, fmt.Errorf("%s: %v", op, req.Error)
 	}
 
@@ -36,14 +27,21 @@ func (d *DBConn) Register(user *domain.User) (*string, error) {
 	return &userIDStr, nil
 }
 
-func (d *DBConn) Login(email, password string) (*domain.User, error) {
+func (d *DBConn) GetUserDataByEmail(email string) (*domain.User, error) {
+	op := "repository.postgres.GetUserDataByEmail"
 
 	user := &domain.User{}
-	req := d.db.Select("users").Where("email = ?", email).
-		InnerJoins("passwords").First(&user)
-	if req.RowsAffected != 0 {
-		return nil, errors.New("user+password not found")
+	req := d.db.Where("email = ?", email).First(&user)
+	if req.RowsAffected == 0 {
+		return nil, ErrUserNotFound
 	}
-
+	if req.Error != nil {
+		return nil, fmt.Errorf("%s: %w", op, req.Error)
+	}
 	return user, nil
 }
+
+var (
+	ErrUserExists   = errors.New("user already exists")
+	ErrUserNotFound = errors.New("user not found")
+)

@@ -4,11 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/v0hmly/keeppri-backend/internal/lib/hash"
 	log "github.com/v0hmly/keeppri-backend/internal/lib/logger"
 	"github.com/v0hmly/keeppri-backend/internal/repository"
 	"github.com/v0hmly/keeppri-backend/internal/repository/domain"
+	"github.com/v0hmly/keeppri-backend/internal/repository/postgres"
 )
 
 type AuthServices struct {
@@ -35,16 +38,6 @@ func (s *AuthServices) Register(user *domain.User) (*string, error) {
 
 	logger.Debug("registering user")
 
-	userExists, err := s.repos.DB.UserExists(user.Email)
-	if err != nil {
-		logger.Error("failed to detect that the user exists", log.Err(err))
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-	if userExists {
-		logger.Error("user already exists")
-		return nil, ErrUserExists
-	}
-
 	hashedPwd, err := s.hash.GenerateHash(user.Password)
 	if err != nil {
 		logger.Error("failed to generate password hash", log.Err(err))
@@ -61,9 +54,44 @@ func (s *AuthServices) Register(user *domain.User) (*string, error) {
 }
 
 func (s *AuthServices) Login(email, password string) (*string, error) {
-	s.repos.DB.Login(email, password)
+	op := "services.AuthServices.Login"
 
-	return nil, nil
+	logger := s.logger.With(
+		slog.String("op", op),
+		slog.String("email", email),
+	)
+
+	logger.Debug("registering user")
+
+	user, err := s.repos.DB.GetUserDataByEmail(email)
+	if err != nil {
+		if errors.Is(err, postgres.ErrUserNotFound) {
+			return nil, ErrLoginCredsInvalid
+		}
+		logger.Error("failed to login user", log.Err(err))
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	arePasswordEquals, err := s.hash.CompareHashAndPassword(user.Password, password)
+	if err != nil {
+		logger.Error("failed to login user", log.Err(err))
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	if !arePasswordEquals {
+		return nil, ErrLoginCredsInvalid
+	}
+
+	session := domain.Session{
+		SessionID: uuid.New().String(),
+		ExpireAt:  30 * 24 * time.Hour,
+		UserID:    user.ID,
+	}
+	if err := s.repos.Redis.SetSession(&session); err != nil {
+		logger.Error("failed to login user", log.Err(err))
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return &session.SessionID, nil
 }
 
 func (s *AuthServices) Logout(sessionID string) error {
@@ -71,6 +99,5 @@ func (s *AuthServices) Logout(sessionID string) error {
 }
 
 var (
-	ErrUserExists   = errors.New("user already exists")
-	ErrUserNotFound = errors.New("user not found")
+	ErrLoginCredsInvalid = errors.New("invalid login credentials")
 )

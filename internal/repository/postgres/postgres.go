@@ -10,9 +10,8 @@ import (
 )
 
 type UserRepository interface {
-	UserExists(email string) (bool, error)
-	Login(email, password string) (*string, error)
 	Register(user *domain.User) (*string, error)
+	GetUserDataByEmail(email string) (*domain.User, error)
 }
 
 type DBConn struct {
@@ -26,7 +25,7 @@ func NewDB(cfg *config.PostgresConfig) (*DBConn, error) {
 	conn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Db)
 
-	db, err := gorm.Open(postgres.Open(conn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(conn), &gorm.Config{TranslateError: true})
 	if err != nil {
 		return nil, fmt.Errorf("%s: db connection failed: %w", op, err)
 	}
