@@ -72,12 +72,15 @@ func (h *Handler) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.Logout
 		return nil, status.Errorf(codes.Unauthenticated, "no ctx metadata")
 	}
 
-	sessionToken := md.Get("session_token")[0]
-	if sessionToken == "" {
+	sessionToken := md.Get("session_token")
+	if len(sessionToken) == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "no session token")
+	}
+	if sessionToken[0] == "" {
 		return nil, status.Errorf(codes.PermissionDenied, "invalid session id")
 	}
 
-	err := h.services.AuthService.Logout(sessionToken)
+	err := h.services.AuthService.Logout(sessionToken[0])
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to logout user")
 	}
