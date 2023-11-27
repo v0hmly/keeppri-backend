@@ -11,8 +11,8 @@ import (
 
 type SessionsRepository interface {
 	SetSession(session *domain.Session) error
-	GetSession(sessionID string) (*domain.Session, error)
-	DelSession(sessionID string) error
+	GetSession(sessionToken string) (*domain.Session, error)
+	DelSession(sessionToken string) error
 }
 
 type Redis struct {

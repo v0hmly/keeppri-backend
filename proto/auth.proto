@@ -29,7 +29,7 @@ message LoginRequest {
 }
 
 message LoginResponse {
-  string session_id = 1;
+  string session_token = 1;
 }
 
 //Logout

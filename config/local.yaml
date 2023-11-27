@@ -17,3 +17,6 @@ redis:
   port: 6379
   db: 0
   password: redis
+
+token:
+  session_token_size: 32

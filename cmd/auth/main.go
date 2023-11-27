@@ -11,6 +11,7 @@ import (
 	"github.com/v0hmly/keeppri-backend/internal/grpc"
 	"github.com/v0hmly/keeppri-backend/internal/lib/hash"
 	log "github.com/v0hmly/keeppri-backend/internal/lib/logger"
+	"github.com/v0hmly/keeppri-backend/internal/lib/token"
 	"github.com/v0hmly/keeppri-backend/internal/repository"
 	"github.com/v0hmly/keeppri-backend/internal/services"
 )
@@ -43,9 +44,10 @@ func run() error {
 	}
 
 	newServices := services.NewServices(services.Deps{
-		Logger: logger,
-		Repos:  repo,
-		Hash:   hash.NewBcryptPasswordHasher(),
+		Logger:       logger,
+		Repos:        repo,
+		Hash:         hash.NewBcryptPasswordHasher(),
+		TokenManager: token.NewSessionTokenGenerator(cfg.Token.SessionTokenSize),
 	})
 
 	grpcHandler := grpc.NewGrpcHandler(newServices)

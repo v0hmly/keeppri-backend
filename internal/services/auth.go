@@ -6,25 +6,27 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/v0hmly/keeppri-backend/internal/lib/hash"
 	log "github.com/v0hmly/keeppri-backend/internal/lib/logger"
+	"github.com/v0hmly/keeppri-backend/internal/lib/token"
 	"github.com/v0hmly/keeppri-backend/internal/repository"
 	"github.com/v0hmly/keeppri-backend/internal/repository/domain"
 	"github.com/v0hmly/keeppri-backend/internal/repository/postgres"
 )
 
 type AuthServices struct {
-	logger *slog.Logger
-	repos  *repository.Repository
-	hash   hash.PasswordHasher
+	logger       *slog.Logger
+	repos        *repository.Repository
+	hash         hash.PasswordHasher
+	tokenManager token.TokenManager
 }
 
-func NewAuthServices(logger *slog.Logger, repos *repository.Repository, hash hash.PasswordHasher) *AuthServices {
+func NewAuthServices(logger *slog.Logger, repos *repository.Repository, hash hash.PasswordHasher, tokenManager token.TokenManager) *AuthServices {
 	return &AuthServices{
-		logger: logger,
-		repos:  repos,
-		hash:   hash,
+		logger:       logger,
+		repos:        repos,
+		hash:         hash,
+		tokenManager: tokenManager,
 	}
 }
 
@@ -81,8 +83,14 @@ func (s *AuthServices) Login(email, password string) (*string, error) {
 		return nil, ErrLoginCredsInvalid
 	}
 
+	token, err := s.tokenManager.GenerateToken()
+	if err != nil {
+		logger.Error("failed to login user", log.Err(err))
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
 	session := domain.Session{
-		SessionToken: uuid.New().String(),
+		SessionToken: token,
 		ExpireAt:     30 * 24 * time.Hour,
 		UserID:       user.ID,
 	}

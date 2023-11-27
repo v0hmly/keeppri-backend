@@ -19,10 +19,10 @@ func (r *Redis) SetSession(session *domain.Session) error {
 	return nil
 }
 
-func (r *Redis) GetSession(sessionID string) (*domain.Session, error) {
+func (r *Redis) GetSession(sessionToken string) (*domain.Session, error) {
 	op := "repository.redis.session.GetSession"
 
-	data, err := r.client.Get(context.Background(), sessionID).Bytes()
+	data, err := r.client.Get(context.Background(), sessionToken).Bytes()
 	if err == redis.Nil {
 		return nil, fmt.Errorf("%s: key not found: %w", op, err)
 	} else if err != nil {
@@ -35,7 +35,7 @@ func (r *Redis) GetSession(sessionID string) (*domain.Session, error) {
 		return nil, fmt.Errorf("%s: unmarshal error: %w", op, err)
 	}
 
-	if err := r.client.Expire(context.Background(), sessionID, session.ExpireAt).Err(); err != nil {
+	if err := r.client.Expire(context.Background(), sessionToken, session.ExpireAt).Err(); err != nil {
 		return nil, fmt.Errorf("%s: expire error: %w", op, err)
 	}
 

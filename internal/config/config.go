@@ -15,6 +15,7 @@ type (
 		GRPC     GRPCConfig     `yaml:"grpc"`
 		Postgres PostgresConfig `yaml:"postgres"`
 		Redis    RedisConfig    `yaml:"redis"`
+		Token    TokenConfig    `yaml:"token"`
 	}
 
 	GRPCConfig struct {
@@ -35,6 +36,10 @@ type (
 		Port     int    `yaml:"port"`
 		Db       int    `yaml:"db"`
 		Password string `yaml:"password"`
+	}
+
+	TokenConfig struct {
+		SessionTokenSize int `yaml:"session_token_size"`
 	}
 )
 

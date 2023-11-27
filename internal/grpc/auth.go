@@ -22,7 +22,7 @@ func (h *Handler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRes
 		return nil, status.Error(codes.InvalidArgument, "password is required")
 	}
 
-	SessionId, err := h.services.AuthService.Login(req.Email, req.Password)
+	SessionToken, err := h.services.AuthService.Login(req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, services.ErrLoginCredsInvalid) {
 			return nil, status.Errorf(codes.NotFound, "invalid login credentials")
@@ -30,7 +30,7 @@ func (h *Handler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRes
 		return nil, status.Errorf(codes.Internal, "failed to login user")
 	}
 
-	return &pb.LoginResponse{SessionId: *SessionId}, nil
+	return &pb.LoginResponse{SessionToken: *SessionToken}, nil
 }
 
 func (h *Handler) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
@@ -72,12 +72,12 @@ func (h *Handler) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.Logout
 		return nil, status.Errorf(codes.Unauthenticated, "no ctx metadata")
 	}
 
-	sessionID := md.Get("session_token")[0]
-	if sessionID == "" {
+	sessionToken := md.Get("session_token")[0]
+	if sessionToken == "" {
 		return nil, status.Errorf(codes.PermissionDenied, "invalid session id")
 	}
 
-	err := h.services.AuthService.Logout(sessionID)
+	err := h.services.AuthService.Logout(sessionToken)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to logout user")
 	}
